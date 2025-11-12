@@ -1,0 +1,11 @@
+[project]
+name = "dci-runner"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "podman>=5.5.0",
+    "structlog>=25.4.0",
+    "urllib3>=2.5.0",
+    "websockets>=15.0.1",
+]

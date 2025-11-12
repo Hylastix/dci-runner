@@ -1,0 +1,25 @@
+FROM registry.access.redhat.com/ubi10-minimal
+
+ARG DCI_UID=1000
+ENV DCI_UID=${DCI_UID}
+
+RUN microdnf install -y shadow-utils && microdnf clean all
+
+COPY --from=docker.io/astral/uv:latest /uv /uvx /bin/
+
+RUN useradd -u ${DCI_UID} dci
+
+COPY --chown=dci:dci ./src/ /app
+
+COPY --chown=dci:dci ./pyproject.toml /app/
+COPY --chown=dci:dci ./uv.lock /app/
+COPY --chown=dci:dci ./Dockerfile.collector /app/Dockerfile
+COPY --chown=dci:dci ./.secrets.env /app/
+
+USER dci
+
+WORKDIR /app
+
+RUN uv sync --locked
+
+CMD [ "uv", "run", "main.py" ]

@@ -1,0 +1,36 @@
+services:
+  sonarqube:
+    image: docker.io/library/sonarqube:community
+    restart: unless-stopped
+    networks:
+      - dci
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    stop_grace_period: 3600s
+
+  runner:
+    image: localhost/runner:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    security_opt:
+      - label:type:container_runtime_t
+    volumes:
+      - /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock:z,U
+    env_file:
+      - .runner.env
+    networks:
+      - dci
+    depends_on:
+      - sonarqube
+
+networks:
+  dci:
+    external: true
+
+volumes:
+  sonar_data:
+  sonar_logs:

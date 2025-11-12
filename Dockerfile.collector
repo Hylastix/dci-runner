@@ -1,0 +1,30 @@
+FROM registry.access.redhat.com/ubi10-minimal
+
+RUN microdnf install -y shadow-utils git python python-pip python3-requests tar zip unzip && microdnf clean all
+
+RUN pip install pysonar
+
+COPY ./scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./scripts/run_sonar_python.sh /usr/local/bin/run_sonar_python.sh
+COPY ./scripts/collector.py /usr/local/bin/collector.py
+COPY ./scripts/bus-factor /usr/local/bin/bus-factor
+COPY ./scripts/scorecard /usr/local/bin/scorecard
+
+RUN chmod +x /usr/local/bin/entrypoint.sh && \
+  chmod +x /usr/local/bin/run_sonar_python.sh && \
+  chmod +x /usr/local/bin/collector.py && \
+  chmod +x /usr/local/bin/bus-factor && \
+  chmod +x /usr/local/bin/scorecard
+
+RUN useradd dci
+
+COPY --chown=dci:dci ./.secrets.env /etc/dci/secrets.env
+
+USER dci
+
+RUN bash -c 'curl -s "https://get.sdkman.io" | bash' && \
+  bash -c 'source /home/dci/.sdkman/bin/sdkman-init.sh && sdk install java 17.0.16-tem'
+
+RUN pip install msgspec
+
+ENTRYPOINT ["/usr/bin/bash", "-c", "/usr/local/bin/entrypoint.sh"]
